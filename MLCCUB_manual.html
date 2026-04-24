@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Matteo Ventura" />
+
+
+<title>CUBClustR User Manual</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">CUBClustR User Manual</h1>
+<h4 class="author">Matteo Ventura</h4>
+
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>The MLC-CUB model extends the CUB (Combination of a Uniform and
+shifted Binomial) framework to multivariate rating data. It assumes that
+each response results from two latent components:</p>
+<ul>
+<li><strong>Feeling</strong> – the respondent’s underlying attitude or
+preference;</li>
+<li><strong>Uncertainty</strong> – the indecision inherent in the
+response process.</li>
+</ul>
+<p>By combining these components within a model-based clustering
+approach estimated via the EM algorithm, MLC-CUB identifies groups of
+respondents sharing similar patterns of feeling and uncertainty.</p>
+</div>
+<div id="the-univer-dataset" class="section level2">
+<h2>The ‘univer’ Dataset</h2>
+<p>The participants of this study were asked to evaluate five specific
+aspects of the University of Naples Federico II Orientation services.
+Each item corresponds to a key dimension of the student experience:</p>
+<ul>
+<li><strong>Q1 – Information:</strong> Satisfaction regarding the
+quality and clarity of the acquired information.</li>
+<li><strong>Q2 – Willingness:</strong> Satisfaction regarding the
+availability and helpfulness of the staff.</li>
+<li><strong>Q3 – Office Hours:</strong> Satisfaction regarding the
+accessibility and convenience of the opening hours.</li>
+<li><strong>Q4 – Competence:</strong> Satisfaction regarding the
+professional expertise and knowledge of the staff.</li>
+<li><strong>Q5 – Global Satisfaction:</strong> An overall evaluation of
+the orientation service experience.</li>
+</ul>
+<p>The responses were collected using a seven-point Likert scale (1 =
+“Very unsatisfied”, 7 = “Extremely satisfied”).</p>
+</div>
+<div id="replicating-the-analysis" class="section level2">
+<h2>Replicating the Analysis</h2>
+<p>First, load the required packages and the dataset:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(CUBClustR)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(CUB)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">data</span>(univer)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co"># Select the 5 relevant ordinal items (columns 8 to 12)</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>R <span class="ot">&lt;-</span> univer[, <span class="dv">8</span><span class="sc">:</span><span class="dv">12</span>]</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>R <span class="ot">&lt;-</span> <span class="fu">apply</span>(R, <span class="dv">2</span>, as.integer)</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co"># Maximum categories for each item (m = 7)</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>m_vector <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">7</span>, <span class="fu">ncol</span>(R))</span></code></pre></div>
+<p>Next, we can fit the MLC-CUB model. In this example, we fit a model
+with <span class="math inline">\(K=3\)</span> latent classes. <em>(Note:
+To replicate the exact seminal paper results, optimal K should be
+selected via BIC).</em></p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Fit the MLCCUB model with 3 clusters</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co"># Set eval=FALSE here if the computation takes too long during package build</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>results_k3 <span class="ot">&lt;-</span> <span class="fu">fit_MLCCUB</span>(<span class="at">data =</span> R, <span class="at">m =</span> m_vector, <span class="at">K =</span> <span class="dv">3</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co"># View the estimated Pi (Uncertainty) and Xi (Feeling) matrices</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="fu">print</span>(results_k3<span class="sc">$</span>pi_mat)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="fu">print</span>(results_k3<span class="sc">$</span>xi_mat)</span></code></pre></div>
+</div>
+<div id="reference" class="section level2">
+<h2>Reference</h2>
+<p>Ventura M., Jacques J., Zuccolotto P. (2025), <em>Model-based
+Clustering of Multivariate Rating Data accounting for Feeling and
+Uncertainty</em>. Journal of Classification. 1-22.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

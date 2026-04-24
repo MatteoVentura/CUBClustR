@@ -1,0 +1,196 @@
+---
+title: "CUBClustR User Manual"
+author: "Matteo Ventura"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{CUBClustR User Manual}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 7,
+  fig.height = 5
+)
+```
+
+## Introduction
+The MLC-CUB model extends the CUB (Combination of a Uniform and shifted Binomial) framework to multivariate rating data. It assumes that each response results from two latent components:
+
+* **Feeling** – the respondent’s underlying attitude or preference;
+* **Uncertainty** – the indecision inherent in the response process.
+
+By combining these components within a model-based clustering approach estimated via the EM algorithm, MLC-CUB identifies groups of respondents sharing similar patterns of feeling and uncertainty.
+
+## The 'univer' Dataset
+The participants of this study were asked to evaluate five specific aspects of the University of Naples Federico II Orientation services. Each item corresponds to a key dimension of the student experience:
+
+* **Q1 – Information:** Satisfaction regarding the quality and clarity of the acquired information.
+* **Q2 – Willingness:** Satisfaction regarding the availability and helpfulness of the staff.
+* **Q3 – Office Hours:** Satisfaction regarding the accessibility and convenience of the opening hours.
+* **Q4 – Competence:** Satisfaction regarding the professional expertise and knowledge of the staff.
+* **Q5 – Global Satisfaction:** An overall evaluation of the orientation service experience.
+
+The responses were collected using a seven-point Likert scale (1 = "Very unsatisfied", 7 = "Extremely satisfied").
+
+## 1. Data Preparation
+
+First, let's load the required packages and the dataset to prepare the matrix of responses.
+
+```{r setup}
+library(CUBClustR)
+library(CUB)
+library(ggplot2)
+
+data(univer)
+
+# Select the 5 relevant ordinal items (columns 8 to 12)
+R <- univer[, 8:12]
+R <- apply(R, 2, as.integer)
+
+# Maximum categories for each item (m = 7)
+m_vector <- rep(7, ncol(R))
+```
+
+## 2. Model Selection (BIC)
+
+We test from 1 to 7 latent classes to find the optimal balance between model complexity and fit. The `compare_MLCCUB_models` function automatically computes the Bayesian Information Criterion (BIC) for each model.
+
+*(Note: Depending on your hardware, estimating multiple models might take a few moments).*
+
+```{r model-selection, results='hide'}
+# For the vignette, we use reduced parameters to speed up the compilation.
+# In a real analysis, EM_iter = 10, max_iter = 1500, and a wider K_vector are recommended.
+model_selection <- compare_MLCCUB_models(
+  data     = R, 
+  m        = m_vector, 
+  K_vector = 1:5, 
+  EM_iter  = 1, 
+  max_iter = 50
+)
+```
+
+We can plot the BIC trend to visualize the optimal number of clusters:
+
+```{r bic-plot}
+ggplot(model_selection$summary, aes(x = K, y = BIC)) +
+  geom_line(color = "#2C3E50", linewidth = 1.2) +
+  geom_point(color = "#BD4F6C", size = 3) +
+  theme_bw() +
+  labs(title = "Model Selection: BIC Trend (University Data)",
+       x     = "Number of Latent Classes (K)",
+       y     = "BIC") +
+  scale_x_continuous(breaks = 1:5)
+```
+
+## 3. Stability & Identifiability Check
+
+Assuming the BIC results suggest a 3-cluster solution ($K=3$), we evaluate its identifiability using a bootstrap procedure. The function returns the Adjusted Rand Index (ARI) distribution: values near 1 indicate highly stable clusters.
+
+This chunk of code is not evaluated to speedup the building of the vignette.
+```{r identifiability, eval = F}
+# We use n_boot = 5 and n_cores = 1 to prevent timeouts and system permission blocks
+identifiability <- check_identifiability(
+  data      = R, 
+  m         = m_vector, 
+  K         = 3, 
+  n_boot    = 100, 
+  n_cores   = 4 
+)
+
+# Display the ARI distribution
+identifiability$plot
+```
+
+## 4. Final Model Visualization (K = 3)
+
+Let's extract the 3-cluster model from our model selection list to interpret the results.
+
+```{r extract-model}
+model_k3 <- model_selection$all_models$K3
+```
+
+### Parameter Space
+The first visualization allows us to identify "satisfied", "unhappy", or "uncertain" groups by plotting the Feeling vs. Uncertainty parameters.
+
+```{r plot-params}
+plot_params <- plot_MLCCUB_clusters(model_k3)
+plot_params + labs(title = "University Clusters: Parameter Space")
+```
+
+### Observed vs Theoretical Fit
+We can also visually check how well the model mimics the real data distributions for each item and cluster.
+
+```{r plot-fit, fig.width=8, fig.height=6}
+plot_fit <- plot_CUB_fit(
+  model_obj  = model_k3, 
+  data       = R, 
+  m          = m_vector,
+  line_color = "#93B5C6"
+)
+plot_fit
+```
+
+## 5. Goodness of Fit Diagnostics
+
+For a quantitative assessment of the fit quality, we compute the Weighted Average Dissimilarity (WAD). A global index closer to 0 indicates a perfect fit.
+
+```{r wad-diagnostics}
+fit_metrics <- calculate_WAD(model_obj = model_k3, data = R, m = m_vector)
+
+# Diagnostic results
+fit_metrics$WAD                   # Global index 
+fit_metrics$Cluster_Dissimilarity # Unweighted average dissimilarity by cluster
+fit_metrics$Item_Dissimilarity    # Weighted average dissimilarity by item
+```
+
+## 6. Non-metric Multidimensional Scaling (NMDS)
+
+Finally, we use NMDS to project respondents into a 2D space. Unlike classical MDS, NMDS preserves the rank-order of distances, making it ideal for non-linear ordinal rating data. We use the Manhattan distance on a subsample of respondents for clarity.
+
+```{r nmds, results='hide'}
+library(vegan)
+
+set.seed(123) 
+idx_sample <- sample(1:nrow(R), 800) 
+R_sub <- R[idx_sample, ]
+cluster_sub <- model_k3$class[idx_sample]
+
+nmds_res <- metaMDS(R_sub, 
+                    distance = "manhattan", 
+                    k = 2, 
+                    trymax = 20,
+                    autotransform = FALSE, 
+                    trace = 0)
+```
+
+```{r nmds-plot}
+cat("NMDS Stress Value:", round(nmds_res$stress, 4), "\n")
+
+nmds_data <- data.frame(
+  NMDS1   = nmds_res$points[, 1],
+  NMDS2   = nmds_res$points[, 2],
+  Cluster = factor(cluster_sub)
+)
+
+my_palette <- c("#93B5C6", "#DDEDAA", "#D7816A", "#F0CF65", "#BD4F6C")
+
+ggplot(nmds_data, aes(x = NMDS1, y = NMDS2, color = Cluster)) +
+  geom_jitter(width = 0.3, height = 0.3, alpha = 0.8, size = 2) +
+  scale_color_manual(values = my_palette) +
+  theme_minimal() +
+  labs(
+    title = "Non-metric MDS: Respondents clusters",
+    x = "Dimension 1",
+    y = "Dimension 2"
+  ) +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+## Reference
+Ventura M., Jacques J., Zuccolotto P. (2025), *Model-based Clustering of Multivariate Rating Data accounting for Feeling and Uncertainty*. Journal of Classification. 1-22.

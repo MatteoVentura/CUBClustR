@@ -1,0 +1,23 @@
+Package: CUBClustR
+Title: Clustering rating data within the CUB framework
+Version: 1.0.0
+Authors@R: 
+    person("Matteo", "Ventura", , "matteo.ventura@unibs.it", role = c("aut", "cre"))
+Description: Provides tools for fitting and validating the Multivariate Latent Class CUB (MLC-CUB) model. 
+    This package allows researchers to perform model-based clustering of multivariate rating data by disentangling 
+    respondents' underlying attitudes (Feeling) and indecision (Uncertainty). It includes functions for model 
+    estimation via the Expectation-Maximization (EM) algorithm, model selection, and visualization of clusters.
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+        license
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+LinkingTo: Rcpp
+Imports: CUB, doParallel, foreach, ggplot2, mclust, Rcpp, reshape2,
+        parallel
+NeedsCompilation: yes
+Packaged: 2026-04-24 17:05:40 UTC; Utente
+Author: Matteo Ventura [aut, cre]
+Maintainer: Matteo Ventura <matteo.ventura@unibs.it>
+Suggests: knitr, rmarkdown, vegan, CUB
+VignetteBuilder: knitr
