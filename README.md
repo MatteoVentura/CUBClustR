@@ -1,10 +1,10 @@
-# CUBClustR: Clustering Rating Data within the CUB Framework 📊
+# CUBClustR: Clustering Rating Data within the CUB Framework
 
 **CUBClustR** is an R package that implements the **MLC-CUB (Multivariate Latent Class CUB)** model. It allows researchers to segment ordinal data (ratings) by accounting for both the *feeling process* (reasoned choice) and the *uncertainty* of the respondent, grouping subjects into $K$ latent clusters. 
 
 The estimation relies on the Expectation-Maximization (EM) algorithm, deeply optimized via a **C++ backend (Rcpp)** to ensure high computational performance.
 
-## 🛠 Installation
+## Installation
 
 You can install the development version of `CUBClustR` directly from GitHub. Ensure you have the `vegan` package installed first:
 
@@ -93,5 +93,5 @@ print(fit_metrics$WAD) # Global index (closer to 0 is better)
 📚 Documentation
 For a complete overview of the mathematical framework, diagnostic indices, and Non-metric Multidimensional Scaling (NMDS) examples, please check the following resources located in the docs/ folder:
 
--  Official Technical Manual (PDF)
--  Full Example Script (R)
+* **[Official Technical Manual (PDF)](docs/CUBClustR_manual.pdf)**
+* **[Full Example Script (R)](docs/univ_script.R)**
