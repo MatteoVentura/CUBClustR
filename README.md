@@ -94,4 +94,4 @@ print(fit_metrics$WAD) # Global index (closer to 0 is better)
 For a complete overview of the mathematical framework, diagnostic indices, and Non-metric Multidimensional Scaling (NMDS) examples, please check the following resources located in the docs/ folder:
 
 * **[Official Technical Manual (PDF)](docs/CUBClustR_manual.pdf)**
-* **[Full Example Script (R)](docs/univ_script.R)**
+* **[Full Example Script (R)](docs/univ_script_example.R)**
