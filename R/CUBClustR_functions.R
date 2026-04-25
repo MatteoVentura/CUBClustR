@@ -512,11 +512,11 @@ check_identifiability <- function(data, m, K, n_boot = 100, n_cores = 1,
   
   if (n_cores > 1) {
     message("Configuring parallel cluster with ", n_cores, " cores...")
-    cl <- makeCluster(n_cores)
-    registerDoParallel(cl)
+    cl <- parallel::makeCluster(n_cores)
+    doParallel::registerDoParallel(cl)
     
     # Carichiamo direttamente il pacchetto nei core paralleli
-    clusterEvalQ(cl, {
+    parallel::clusterEvalQ(cl, {
       library(CUBClustR)
     })
   } else {
@@ -537,7 +537,7 @@ check_identifiability <- function(data, m, K, n_boot = 100, n_cores = 1,
   }
   
   if (n_cores > 1) {
-    stopCluster(cl)
+    parallel::stopCluster(cl)
   }
   
   message("Computing pairwise ARI matrix...")
