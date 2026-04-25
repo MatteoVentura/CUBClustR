@@ -14,10 +14,10 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 LinkingTo: Rcpp
 Imports: CUB, doParallel, foreach, ggplot2, mclust, Rcpp, reshape2,
-        parallel
+        parallel, vegan
 NeedsCompilation: yes
 Packaged: 2026-04-24 17:05:40 UTC; Utente
 Author: Matteo Ventura [aut, cre]
 Maintainer: Matteo Ventura <matteo.ventura@unibs.it>
-Suggests: knitr, rmarkdown, vegan, CUB
+Suggests: knitr, rmarkdown, CUB
 VignetteBuilder: knitr

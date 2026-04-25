@@ -484,11 +484,10 @@ plot_CUB_fit <- function(model_obj, data, m, cluster_order = NULL, line_color = 
 #' @param n_cores Number of CPU cores for parallel computation (default: 1 for sequential).
 #' @param plot_hist Logical. If TRUE, generates and returns the ARI distribution histogram.
 #' @param seed Random seed for reproducibility.
-#' @param cpp_file Path to the C++ engine file to be loaded by workers (default: "engine.cpp").
 #' @param ... Additional arguments passed to `fit_MLCCUB` (e.g., `EM_iter`, `tol`).
 #'
 #' @return A list containing the pairwise ARI matrix (`ARI_matrix`), the flattened ARI values (`ARI_values`), the ggplot object (`plot`), and the raw cluster assignments (`raw_clusters`).
-#' @importFrom parallel makeCluster clusterExport stopCluster
+#' @importFrom parallel makeCluster clusterEvalQ stopCluster
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach %dopar% registerDoSEQ
 #' @importFrom ggplot2 ggplot geom_histogram labs theme_classic theme element_text xlim aes
@@ -506,74 +505,73 @@ plot_CUB_fit <- function(model_obj, data, m, cluster_order = NULL, line_color = 
 #' }
 #' @export
 check_identifiability <- function(data, m, K, n_boot = 100, n_cores = 1,
-                                  plot_hist = TRUE, seed = 250535,
-                                  cpp_file = .cpp_path, ...) {
-
+                                  plot_hist = TRUE, seed = 250535, ...) {
+  
   set.seed(seed)
   n <- nrow(data)
-
+  
   if (n_cores > 1) {
     message("Configuring parallel cluster with ", n_cores, " cores...")
     cl <- makeCluster(n_cores)
     registerDoParallel(cl)
-
-    clusterExport(cl, varlist = c("fit_MLCCUB", "cpp_file"), envir = environment())
+    
+    # Carichiamo direttamente il pacchetto nei core paralleli
     clusterEvalQ(cl, {
-      library(Rcpp)
-      sourceCpp(cpp_file)
+      library(CUBClustR)
     })
   } else {
     registerDoSEQ()
   }
-
+  
   message("Starting Bootstrap (", n_boot, " iterations) for K = ", K, "...")
-
-  boot_results <- foreach(b = 1:n_boot, .packages = c("Rcpp")) %dopar% {
-
+  
+  # Assicuriamoci che ogni worker usi il pacchetto CUBClustR
+  boot_results <- foreach(b = 1:n_boot, .packages = c("CUBClustR")) %dopar% {
+    
     boot_idx <- sample(1:n, replace = TRUE)
     boot_data <- data[boot_idx, ]
-
+    
     mod <- fit_MLCCUB(data = boot_data, m = m, K = K, ...)
-
+    
     list(index = boot_idx, class = mod$class)
   }
-
+  
   if (n_cores > 1) {
     stopCluster(cl)
   }
-
+  
   message("Computing pairwise ARI matrix...")
   num_elements <- length(boot_results)
   ARI_matrix <- matrix(NA, nrow = num_elements, ncol = num_elements)
-
+  
   for (i in 1:num_elements) {
     index1 <- boot_results[[i]]$index
     for (j in i:num_elements) {
       index2 <- boot_results[[j]]$index
-
+      
       intersection <- intersect(index1, index2)
-
+      
       if(length(intersection) > 0) {
         match1 <- match(intersection, index1)
         match2 <- match(intersection, index2)
-
+        
         class1 <- boot_results[[i]]$class[match1]
         class2 <- boot_results[[j]]$class[match2]
-
+        
         ARI_val <- mclust::adjustedRandIndex(class1, class2)
       } else {
         ARI_val <- NA
       }
-
+      
       ARI_matrix[i, j] <- ARI_val
       ARI_matrix[j, i] <- ARI_val
     }
   }
-
+  
   diag(ARI_matrix) <- NA
   ARI_vector <- ARI_matrix[upper.tri(ARI_matrix)]
   ARI_vector <- ARI_vector[!is.na(ARI_vector)]
-
+  
   p <- NULL
   if (plot_hist) {
     ARI_df <- data.frame(ARI = ARI_vector)
@@ -590,9 +588,9 @@ check_identifiability <- function(data, m, K, n_boot = 100, n_cores = 1,
             plot.title = element_text(size = 14, face = "bold", hjust = 0.5)) +
       xlim(-1, 1)
   }
-
+  
   message("Procedure completed!")
-
+  
   return(list(
     ARI_matrix = ARI_matrix,
     ARI_values = ARI_vector,
