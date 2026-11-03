@@ -12,7 +12,6 @@ check_identifiability(
   n_cores = 1,
   plot_hist = TRUE,
   seed = 250535,
-  cpp_file = .cpp_path,
   ...
 )
 }
@@ -30,8 +29,6 @@ check_identifiability(
 \item{plot_hist}{Logical. If TRUE, generates and returns the ARI distribution histogram.}
 
 \item{seed}{Random seed for reproducibility.}
-
-\item{cpp_file}{Path to the C++ engine file to be loaded by workers (default: "engine.cpp").}
 
 \item{...}{Additional arguments passed to \code{fit_MLCCUB} (e.g., \code{EM_iter}, \code{tol}).}
 }

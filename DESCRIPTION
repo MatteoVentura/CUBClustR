@@ -1,6 +1,6 @@
 Package: CUBClustR
 Title: Clustering rating data within the CUB framework
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: 
     person("Matteo", "Ventura", , "matteo.ventura@unibs.it", role = c("aut", "cre"))
 Description: Provides tools for fitting and validating the Multivariate Latent Class CUB (MLC-CUB) model. 
@@ -19,5 +19,5 @@ NeedsCompilation: yes
 Packaged: 2026-04-24 17:05:40 UTC; Utente
 Author: Matteo Ventura [aut, cre]
 Maintainer: Matteo Ventura <matteo.ventura@unibs.it>
-Suggests: knitr, rmarkdown, CUB
+Suggests: knitr, rmarkdown, CUB, vegan
 VignetteBuilder: knitr

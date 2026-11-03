@@ -71,62 +71,63 @@
 #' }
 #' @export
 fit_MLCCUB <- function(data, m, K, tol = 1e-5, EM_iter = 10, max_iter = 1500) {
-
+  
   R <- as.matrix(data)
   storage.mode(R) <- "double"
   m <- as.numeric(m)
-
+  
   n <- nrow(R)
   J <- ncol(R)
-
+  
   uniform.j <- matrix(NA, nrow = n, ncol = J)
   for(j in 1:J) {
     uniform.j[, j] <- rep(1 / m[j], n)
   }
   storage.mode(uniform.j) <- "double"
-
+  
   best_model <- NULL
   best_ll <- -Inf
-
+  
   for(em in 1:EM_iter) {
-
+    
     pi_mat_curr <- matrix(runif(K * J, min = 0.1, max = 0.9), nrow = K, ncol = J)
     xi_mat_curr <- matrix(runif(K * J, min = 0.1, max = 0.9), nrow = K, ncol = J)
     omega_curr <- rep(1 / K, K)
-
+    
     ll_prev <- -Inf
     iter <- 0
-
+    
     success <- tryCatch({
-
+      
       while(iter < max_iter) {
-
-        # E-step (C++)
+        
+        # E-step (C++, in scala logaritmica)
         LL_out <- .LogLik_cpp(as.numeric(omega_curr), pi_mat_curr, R, m, xi_mat_curr, uniform.j)
-        tau_mat <- sweep(LL_out$multiCUB_w_k, 1, LL_out$MLCCUBk + 1e-15, "/")
-
+        tau_mat <- LL_out$tau
+        
         # Reshape eta flat vector from C++
         eta_tens_flat <- .eta_ijk_cpp(pi_mat_curr, R, m, xi_mat_curr, uniform.j, K, J, n)
         dim(eta_tens_flat) <- c(K, J, n)
         eta_tens <- eta_tens_flat
-
+        
         # M-step
-        omega_curr <- colMeans(tau_mat)
-
+        omega_curr <- pmax(colMeans(tau_mat), 1e-10)
+        omega_curr <- omega_curr / sum(omega_curr)
+        
         for(k in 1:K) {
           sum_tau_k <- sum(tau_mat[, k]) + 1e-15
-
+          
           for(j in 1:J) {
             pi_new <- sum(tau_mat[, k] * eta_tens[k, j, ]) / sum_tau_k
             pi_mat_curr[k, j] <- min(max(pi_new, 1e-4), 1 - 1e-4)
-
+            
             num_xi <- sum(tau_mat[, k] * eta_tens[k, j, ] * (m[j] - R[, j]))
             den_xi <- sum(tau_mat[, k] * eta_tens[k, j, ] * (m[j] - 1))
             xi_new <- num_xi / (den_xi + 1e-15)
             xi_mat_curr[k, j] <- min(max(xi_new, 1e-4), 1 - 1e-4)
           }
         }
-
+        
         new_ll <- LL_out$LL
         if(is.finite(new_ll) && is.finite(ll_prev)) {
           if(abs(new_ll - ll_prev) < tol) break
@@ -139,29 +140,32 @@ fit_MLCCUB <- function(data, m, K, tol = 1e-5, EM_iter = 10, max_iter = 1500) {
       message("    [Debug] EM iter ", em, " failed: ", e$message)
       FALSE
     })
-
-    if(success && is.finite(ll_prev) && ll_prev > best_ll) {
-      best_ll <- ll_prev
+    
+    if(success) {
       final_LL_out <- .LogLik_cpp(as.numeric(omega_curr), pi_mat_curr, R, m, xi_mat_curr, uniform.j)
-      final_tau <- sweep(final_LL_out$multiCUB_w_k, 1, final_LL_out$MLCCUBk + 1e-15, "/")
-
-      best_model <- list(
-        pi = pi_mat_curr,
-        xi = xi_mat_curr,
-        omega = omega_curr,
-        LL = best_ll,
-        class = max.col(final_tau),
-        iterations = iter
-      )
+      final_ll <- final_LL_out$LL
+      
+      if(is.finite(final_ll) && final_ll > best_ll) {
+        best_ll <- final_ll
+        best_model <- list(
+          pi = pi_mat_curr,
+          xi = xi_mat_curr,
+          omega = omega_curr,
+          LL = final_ll,
+          class = max.col(final_LL_out$tau),
+          iterations = iter
+        )
+      }
     }
   }
-
+  
   if(is.null(best_model)) {
     stop("The algorithm failed to converge. Check your data or increase EM_iter/tolerance.")
   }
-
+  
   return(best_model)
 }
+
 
 # ==============================================================================
 # 2. COMPARE MODELS
